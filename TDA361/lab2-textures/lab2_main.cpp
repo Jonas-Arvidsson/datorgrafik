@@ -265,6 +265,7 @@ void gui() {
         ImGui::PushID("mag");
         ImGui::Text("Magnification");
         ImGui::RadioButton("GL_NEAREST", &mag, 0);
+		
         ImGui::RadioButton("GL_LINEAR", &mag, 1);
         ImGui::PopID();
 
@@ -281,6 +282,39 @@ void gui() {
         ImGui::SliderFloat("Anisotropic filtering", &anisotropy, 1.0, 16.0, "Number of samples: %.0f");
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	// ----------------------------------------------------------
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+		if (mag == 0) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		}
+		if (mag == 1) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		}
+		if (mini == 0) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+		}
+		if (mini == 1) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+		}
+		if (mini == 2) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+
+		}
+		if (mini == 3) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+
+		}
+		if (mini == 4) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+
+		}
+		if (mini == 5) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		}
 
 
 	// Render the GUI.
@@ -300,7 +334,7 @@ int main(int argc, char *argv[])
 		display();
 
                 // Render overlay GUI.
-                //gui();
+                gui();
 
 		// Swap front and back buffer. This frame will now been displayed.
 		SDL_GL_SwapWindow(g_window);			
