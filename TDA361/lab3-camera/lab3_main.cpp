@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
 		if (state[SDL_SCANCODE_UP]) {
 			T[3] += speed * R[2];
 		}
-		if (state[SDL_SCANCODE_DOWN]) {
+		if (state[SDL_SCANCODE_DOWN]) {	
 			T[3] -= speed * R[2];
 		}
 		if (state[SDL_SCANCODE_LEFT]) {
