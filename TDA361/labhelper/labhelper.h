@@ -70,12 +70,11 @@ namespace labhelper {
 	 * Error reporting function
 	 */
 	void fatal_error(std::string errorString, std::string title = std::string());
-	void non_fatal_error(std::string errorString, std::string title = std::string());
 
 	/**
 	* Initialize a window, an openGL context, and initiate async debug output.
 	*/
-	SDL_Window * init_window_SDL(std::string caption, int width = 1280, int height = 720);
+	SDL_Window * init_window_SDL(std::string caption, int width = 512, int height = 512);
 
 	/**
 	* Destroys that which have been initialized.
@@ -98,11 +97,11 @@ namespace labhelper {
 	 * The reason for this is that before linking we need to bind attribute locations, using
 	 * glBindAttribLocation and fragment data lications, using glBindFragDataLocation.
 	 */
-	GLuint loadShaderProgram(const std::string &vertexShader, const std::string &fragmentShader, bool allow_errors = false);
+	GLuint loadShaderProgram(const std::string &vertexShader, const std::string &fragmentShader);
 	/**
 	 * Call to link a shader program prevoiusly loaded using loadShaderProgram.
 	 */
-	bool linkShaderProgram(GLuint shaderProgram, bool allow_errors = false);
+	void linkShaderProgram(GLuint shaderProgram);
 
 	/**
 	 * Creates a GL buffer and uploads the given data to it.
@@ -122,11 +121,6 @@ namespace labhelper {
 	void setUniformSlow(GLuint shaderProgram, const char *name, const float value);
 	void setUniformSlow(GLuint shaderProgram, const char *name, const GLint value);
 	void setUniformSlow(GLuint shaderProgram, const char *name, const glm::vec3 &value);
-
-	/**
-	* Helper to draw a single quad (two triangles) that cover the entire screen
-	*/
-	void drawFullScreenQuad();
 
 	/**
 	 * Code that draws a sphere where the light is and a stippled line to the

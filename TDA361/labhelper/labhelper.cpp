@@ -12,8 +12,6 @@
 // STB_IMAGE for loading images of many filetypes
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
 
 #include "labhelper.h"
 
@@ -30,7 +28,6 @@
 #include <fstream>
 #include <streambuf>
 #include <glm/gtx/transform.hpp>
-#include <glm/glm.hpp>
 #include <imgui.h>
 #include "imgui_impl_sdl_gl3.h"
 
@@ -85,9 +82,6 @@ namespace labhelper {
 		// Check OpenGL properties
 		labhelper::startupGLDiagnostics();
 		labhelper::setupGLDebugMessages();
-
-		// Flip textures vertically so they don't end up upside-down.
-		stbi_set_flip_vertically_on_load(true);
 
 		// 1 for v-sync
 		SDL_GL_SetSwapInterval(1);
@@ -357,35 +351,23 @@ namespace labhelper {
 	// Error reporting
 	void fatal_error(std::string errorString, std::string title)
 	{
-		if (title.empty()) {
+		if (title.empty())
+		{
 			title = "GL-Tutorial - Error";
 		}
-		if (errorString.empty()) {
+		if (errorString.empty())
+		{
 			errorString = "(unknown error)";
 		}
+
 		// On Win32 we'll use a message box. On !Win32, just print to stderr and abort()
 #if defined(_WIN32)
 		MessageBox(0, errorString.c_str(), title.c_str(), MB_OK | MB_ICONEXCLAMATION);
 #else
 		fprintf( stderr, "%s : %s\n", title.c_str(), errorString.c_str() );
 #endif
-		abort();
-	}
 
-	void non_fatal_error(std::string errorString, std::string title)
-	{
-		if (title.empty()) {
-			title = "GL-Tutorial - Error";
-		}
-		if (errorString.empty()) {
-			errorString = "(unknown error)";
-		}
-		// On Win32 we'll use a message box. On !Win32, just print to stderr and abort()
-#if defined(_WIN32)
-		MessageBox(0, errorString.c_str(), title.c_str(), MB_OK | MB_ICONEXCLAMATION);
-#else
-		fprintf(stderr, "%s : %s\n", title.c_str(), errorString.c_str());
-#endif
+		abort();
 	}
 
 	std::string GetShaderInfoLog(GLuint obj) {
@@ -408,7 +390,7 @@ namespace labhelper {
 
 
 
-	GLuint loadShaderProgram(const std::string &vertexShader, const std::string &fragmentShader, bool allow_errors)
+	GLuint loadShaderProgram(const std::string &vertexShader, const std::string &fragmentShader)
 	{
 		GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
 		GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -432,12 +414,7 @@ namespace labhelper {
 		if (!compileOk)
 		{
 			std::string err = GetShaderInfoLog(vShader);
-			if (allow_errors) {
-				non_fatal_error(err, "Vertex Shader");
-			}
-			else {
-				fatal_error(err, "Vertex Shader");
-			}
+			fatal_error(err);
 			return 0;
 		}
 
@@ -446,12 +423,7 @@ namespace labhelper {
 		if (!compileOk)
 		{
 			std::string err = GetShaderInfoLog(fShader);
-			if (allow_errors) {
-				non_fatal_error(err, "Fragment Shader");
-			}
-			else {
-				fatal_error(err, "Fragment Shader");
-			}
+			fatal_error(err);
 			return 0;
 		}
 
@@ -460,15 +432,15 @@ namespace labhelper {
 		glDeleteShader(fShader);
 		glAttachShader(shaderProgram, vShader);
 		glDeleteShader(vShader);
-		if (!allow_errors) CHECK_GL_ERROR();
+		CHECK_GL_ERROR();
 
-		if (!linkShaderProgram(shaderProgram, allow_errors)) return 0;
+		linkShaderProgram(shaderProgram);
 
 		return shaderProgram;
 	}
 
 
-	bool linkShaderProgram(GLuint shaderProgram, bool allow_errors)
+	void linkShaderProgram(GLuint shaderProgram)
 	{
 		glLinkProgram(shaderProgram);
 		GLint linkOk = 0;
@@ -476,15 +448,9 @@ namespace labhelper {
 		if (!linkOk)
 		{
 			std::string err = GetShaderInfoLog(shaderProgram);
-			if (allow_errors) {
-				non_fatal_error(err, "Linking");
-			}
-			else {
-				fatal_error(err, "Linking");
-			}
-			return false;
+			fatal_error(err);
+			return;
 		}
-		return true;
 	}
 
 
@@ -549,27 +515,5 @@ namespace labhelper {
 		glPopAttrib();
 	}
 
-	void drawFullScreenQuad()
-	{
-		glPushAttrib(GL_DEPTH_BUFFER_BIT);
-		glDisable(GL_DEPTH_TEST);
-		static GLuint vertexArrayObject = 0;
-		static int nofVertices = 4;
-		// do this initialization first time the function is called... somewhat dodgy, but works for demonstration purposes
-		if (vertexArrayObject == 0)
-		{
-			glGenVertexArrays(1, &vertexArrayObject);
-			static const glm::vec2 positions[] = {
-				{ -1.0f, -1.0f },
-				{ 1.0f, -1.0f },
-				{ 1.0f, 1.0f },
-				{ -1.0f, 1.0f },
-			};
-			labhelper::createAddAttribBuffer(vertexArrayObject, positions, sizeof(positions), 0, 2, GL_FLOAT);
-		}
-		glBindVertexArray(vertexArrayObject);
-		glDrawArrays(GL_QUADS, 0, nofVertices);
-		glPopAttrib(); 
-	}
 
 }
