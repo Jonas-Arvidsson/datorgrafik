@@ -52,7 +52,7 @@ vec3 worldUp(0.0f, 1.0f, 0.0f);
 ///////////////////////////////////////////////////////////////////////////////
 // Models
 ///////////////////////////////////////////////////////////////////////////////
-const std::string model_filename = "../scenes/NewShip.obj";
+const std::string model_filename = "../scenes/NewShip.obj"; //THE MODEL
 //const std::string model_filename = "../scenes/sphere.obj";
 labhelper::Model *fighterModel = nullptr;
 labhelper::Model *sphereModel = nullptr;
@@ -144,7 +144,7 @@ void initialize()
 	// Load .obj models
 	///////////////////////////////////////////////////////////////////////////
 	fighterModel = labhelper::loadModelFromOBJ(model_filename);
-	sphereModel = labhelper::loadModelFromOBJ("../scenes/sphere.obj");
+	sphereModel = labhelper::loadModelFromOBJ("../scenes/Sphere.obj");
 }
 
 void debugDrawLight(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix, const glm::vec3 &worldSpaceLightPos)
@@ -195,6 +195,11 @@ void display(void)
 	// Task 4 - Render a fullscreen quad, to generate the background from the 
 	//          environment map. 
 	///////////////////////////////////////////////////////////////////////////
+	glUseProgram(backgroundProgram);
+	labhelper::setUniformSlow(backgroundProgram, "environment_multiplier", environment_multiplier);
+	labhelper::setUniformSlow(backgroundProgram, "inv_PV", inverse(projectionMatrix * viewMatrix));
+	labhelper::setUniformSlow(backgroundProgram, "camera_pos", cameraPosition);
+	labhelper::drawFullScreenQuad();
 
 	///////////////////////////////////////////////////////////////////////////
 	// Render the .obj models
@@ -392,6 +397,7 @@ int main(int argc, char *argv[])
 		//update currentTime
 		std::chrono::duration<float> timeSinceStart = std::chrono::system_clock::now() - startTime;
 		currentTime = timeSinceStart.count();
+		//currentTime = 5.0f;
 
 		// render to window
 		display();

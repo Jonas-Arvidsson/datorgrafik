@@ -19,8 +19,8 @@ using namespace labhelper;
 using std::min;
 using std::max;
 
-static int old_w = 512;
-static int old_h = 512;
+static int old_w = 1280;
+static int old_h = 720;
 
 struct PerspectiveParams
 {
@@ -31,7 +31,7 @@ struct PerspectiveParams
     float far;
 };
 
-static PerspectiveParams pp = {45.0f, 512, 512, 0.1f, 300.0f};
+static PerspectiveParams pp = {45.0f, 1280, 720, 0.1f, 300.0f};
 
 // The window we'll be rendering to
 SDL_Window* g_window = nullptr;
@@ -41,11 +41,8 @@ GLuint shaderProgram;
 float currentTime = 0.0f;
 
 // Models
-Model *cityModel = nullptr, *carModel = nullptr, *carModel2 = nullptr;
+Model *cityModel = nullptr, *carModel = nullptr;
 mat4 carModelMatrix(1.0f);
-mat4 carModelMatrix2(1.0f);
-
-
 
 vec3 worldUp = vec3(0.0f, 1.0f, 0.0f);
 
@@ -60,7 +57,6 @@ void loadModels()
 	///////////////////////////////////////////////////////////////////////////
 	cityModel = loadModelFromOBJ("../scenes/city.obj");
 	carModel = loadModelFromOBJ("../scenes/car.obj");
-	
 }
 
 void display(void)
@@ -97,17 +93,7 @@ void display(void)
 		0.000000000f, 0.816496551f, 1.00000000f, 0.000000000f,
 		-0.707106769f, -0.408248276f, 1.00000000f, 0.000000000f,
 		0.000000000f, 0.000000000f, -30.0000000f, 1.00000000f);
-
-
-	//Task 3
-	vec3 cameraRight = normalize(cross(cameraDirection, worldUp));
-	vec3 cameraUp = normalize(cross(cameraRight, cameraDirection));
-
-	mat3 cameraBaseVectorsWorldSpace(cameraRight, cameraUp, -cameraDirection);
-
-	mat4 cameraRotation = mat4(transpose(cameraBaseVectorsWorldSpace));
-	mat4 viewMatrix = cameraRotation * translate(-cameraPosition);
-
+	mat4 viewMatrix = constantViewMatrix;
 
 	// Setup the projection matrix
         if (w != old_w || h != old_h)
@@ -132,11 +118,6 @@ void display(void)
 	glUniformMatrix4fv(loc, 1, false, &modelViewProjectionMatrix[0].x);
 	render(carModel);
 
-	//car2
-	modelViewProjectionMatrix = projectionMatrix * viewMatrix * carModelMatrix2;
-	glUniformMatrix4fv(loc, 1, false, &modelViewProjectionMatrix[0].x);
-	render(carModel);
-
 
 	glUseProgram( 0 );	
 }
@@ -155,8 +136,8 @@ void gui() {
         if (ImGui::Button("Reset"))
         {
             pp.fov = 45.0f;
-            pp.w = 512;
-            pp.h = 512;
+            pp.w = 1280;
+            pp.h = 720;
             pp.near = 0.1f;
             pp.far = 300.0f;
         }
@@ -183,12 +164,6 @@ int main(int argc, char *argv[])
 	auto startTime = std::chrono::system_clock::now();
 
 	while (!stopRendering) {
-
-		//Task 2
-		static mat4 T2(1.0f), R2(1.0f);
-		T2 = translate(vec3(8.0f, 0.0f, 0.0f));
-		R2 = rotate(-(1)*currentTime, vec3(0.0f, 1.0f, 0.0f));
-		carModelMatrix2 = R2*T2;
 		//update currentTime
 		std::chrono::duration<float> timeSinceStart = std::chrono::system_clock::now() - startTime;
 		currentTime = timeSinceStart.count();
@@ -196,8 +171,8 @@ int main(int argc, char *argv[])
 		// render to window
 		display();
 
-		// Render overlay GUI.
-		gui();
+                // Render overlay GUI.
+                //gui();
 
 		// Swap front and back buffer. This frame will now been displayed.
 		SDL_GL_SwapWindow(g_window);
@@ -220,50 +195,28 @@ int main(int argc, char *argv[])
 				int delta_x = event.motion.x - prev_xcoord;
 				int delta_y = event.motion.y - prev_ycoord;
 				if (event.button.button & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-					float rotationSpeed = 0.005f;
-					mat4 yaw = rotate(rotationSpeed * -delta_x, worldUp);
-					mat4 pitch = rotate(rotationSpeed * -delta_y, normalize(cross(cameraDirection, worldUp)));
-					cameraDirection = vec3(pitch * yaw * vec4(cameraDirection, 0.0f));
+					printf("Mouse motion while left button down (%i, %i)\n", event.motion.x, event.motion.y);
 				}
 				prev_xcoord = event.motion.x;
 				prev_ycoord = event.motion.y;
 			}
-
-
 		}
-
-
 
 		// check keyboard state (which keys are still pressed)
 		const uint8_t *state = SDL_GetKeyboardState(nullptr);
 
-		// implement controls based on key states
-		float speed = 0.3f;
-		static mat4 T(1.0f), R(1.0f);
-		// Make R orthonormal again
-		R[0] = normalize(R[0]);
-		R[2] = vec4(cross(vec3(R[0]), vec3(R[1])), 0.0f);
-		carModelMatrix = T * R;
-
+		// implement camera controls based on key states
 		if (state[SDL_SCANCODE_UP]) {
-			T[3] += speed * R[2];
+			printf("Key Up is pressed down\n");
 		}
-		if (state[SDL_SCANCODE_DOWN]) {	
-			T[3] -= speed * R[2];
+		if (state[SDL_SCANCODE_DOWN]) {
+			printf("Key Down is pressed down\n");
 		}
 		if (state[SDL_SCANCODE_LEFT]) {
-
-			R[0] -= 0.03f * R[2];
+			printf("Key Left is pressed down\n");
 		}
 		if (state[SDL_SCANCODE_RIGHT]) {
-
-			R[0] += 0.03f * R[2];
-		}
-		if (state[SDL_SCANCODE_W]) {
-			cameraPosition += cameraDirection;
-		}
-		if (state[SDL_SCANCODE_S]) {
-			cameraPosition -= cameraDirection;
+			printf("Key Right is pressed down\n");
 		}
 	}
 
