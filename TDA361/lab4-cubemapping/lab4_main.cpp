@@ -11,7 +11,7 @@
 #include <Model.h>
 
 using namespace glm;
-using namespace std; 
+using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Various globals
@@ -24,21 +24,21 @@ int windowWidth, windowHeight;
 // Shader programs
 ///////////////////////////////////////////////////////////////////////////////
 GLuint shaderProgram;
-GLuint backgroundProgram; 
+GLuint backgroundProgram;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Environment
 ///////////////////////////////////////////////////////////////////////////////
 float environment_multiplier = 1.0f;
 GLuint environmentMap;
-GLuint irradianceMap; 
-GLuint reflectionMap; 
+GLuint irradianceMap;
+GLuint reflectionMap;
 const std::string envmap_base_name = "001";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Light source
 ///////////////////////////////////////////////////////////////////////////////
-float point_light_intensity_multiplier = 1000.0f; 
+float point_light_intensity_multiplier = 1000.0f;
 vec3 point_light_color = vec3(1.f, 1.f, 1.f);
 
 
@@ -53,7 +53,7 @@ vec3 worldUp(0.0f, 1.0f, 0.0f);
 // Models
 ///////////////////////////////////////////////////////////////////////////////
 const std::string model_filename = "../scenes/NewShip.obj"; //THE MODEL
-//const std::string model_filename = "../scenes/sphere.obj";
+															//const std::string model_filename = "../scenes/sphere.obj";
 labhelper::Model *fighterModel = nullptr;
 labhelper::Model *sphereModel = nullptr;
 
@@ -64,7 +64,7 @@ labhelper::Model *sphereModel = nullptr;
 void loadShaders(bool is_reload)
 {
 	GLuint shader = labhelper::loadShaderProgram("simple.vert", "simple.frag", is_reload);
-	if (shader != 0) shaderProgram = shader; 
+	if (shader != 0) shaderProgram = shader;
 	shader = labhelper::loadShaderProgram("background.vert", "background.frag", is_reload);
 	if (shader != 0) backgroundProgram = shader;
 }
@@ -83,8 +83,8 @@ void initialize()
 	// Local helper struct for loading HDR images
 	///////////////////////////////////////////////////////////////////////////
 	struct HDRImage {
-		int width, height, components; 
-		float * data = nullptr; 
+		int width, height, components;
+		float * data = nullptr;
 		// Constructor
 		HDRImage(const string & filename) {
 			stbi_set_flip_vertically_on_load(false);
@@ -162,7 +162,7 @@ void display(void)
 	// Set up OpenGL stuff
 	///////////////////////////////////////////////////////////////////////////
 	glViewport(0, 0, windowWidth, windowHeight);
-	glClearColor(0.1,0.1,0.6,1.0);
+	glClearColor(0.1, 0.1, 0.6, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -204,7 +204,7 @@ void display(void)
 	///////////////////////////////////////////////////////////////////////////
 	// Render the .obj models
 	///////////////////////////////////////////////////////////////////////////
-	glUseProgram( shaderProgram );
+	glUseProgram(shaderProgram);
 	// The model matrix is just identity
 	mat4 modelMatrix(1.0f);
 	// Matrices
@@ -223,11 +223,11 @@ void display(void)
 	labhelper::setUniformSlow(shaderProgram, "environment_multiplier", environment_multiplier);
 
 	// Render the main object
-	labhelper::render(fighterModel); 
+	labhelper::render(fighterModel);
 	// Render the light source
 	debugDrawLight(viewMatrix, projectionMatrix, vec3(lightPosition));
 
-	glUseProgram( 0 );	
+	glUseProgram(0);
 }
 
 bool handleEvents(void)
@@ -245,7 +245,7 @@ bool handleEvents(void)
 		if (event.type == SDL_QUIT || (event.type == SDL_KEYUP && event.key.keysym.sym == SDLK_ESCAPE)) {
 			quitEvent = true;
 		}
-		
+
 		if (!io.WantCaptureMouse) {
 			if (event.type == SDL_MOUSEMOTION) {
 				static int prev_xcoord = event.motion.x;
@@ -299,14 +299,14 @@ void gui() {
 	///////////////////////////////////////////////////////////////////////////
 	// Helpers for getting lists of materials and meshes into widgets
 	///////////////////////////////////////////////////////////////////////////
-	static auto mesh_getter = [](void * vec, int idx, const char ** text){
+	static auto mesh_getter = [](void * vec, int idx, const char ** text) {
 		auto& vector = *static_cast<std::vector<labhelper::Mesh>*>(vec);
 		if (idx < 0 || idx >= static_cast<int>(vector.size())) { return false; }
 		*text = vector[idx].m_name.c_str();
 		return true;
 	};
 
-	static auto material_getter = [](void * vec, int idx, const char ** text){
+	static auto material_getter = [](void * vec, int idx, const char ** text) {
 		auto& vector = *static_cast<std::vector<labhelper::Material>*>(vec);
 		if (idx < 0 || idx >= static_cast<int>(vector.size())) { return false; }
 		*text = vector[idx].m_name.c_str();
@@ -321,7 +321,7 @@ void gui() {
 
 	if (ImGui::CollapsingHeader("Meshes", "meshes_ch", true, true))
 	{
-		if (ImGui::ListBox("Meshes", &mesh_index, mesh_getter, 
+		if (ImGui::ListBox("Meshes", &mesh_index, mesh_getter,
 			(void*)&fighterModel->m_meshes, fighterModel->m_meshes.size(), 8)) {
 			material_index = fighterModel->m_meshes[mesh_index].m_material_idx;
 		}
@@ -331,7 +331,7 @@ void gui() {
 		strcpy(name, mesh.m_name.c_str());
 		if (ImGui::InputText("Mesh Name", name, 256)) { mesh.m_name = name; }
 		labhelper::Material & selected_material = fighterModel->m_materials[material_index];
-		if (ImGui::Combo("Material", &material_index, material_getter, 
+		if (ImGui::Combo("Material", &material_index, material_getter,
 			(void *)&fighterModel->m_materials, fighterModel->m_materials.size())) {
 			mesh.m_material_idx = material_index;
 		}
@@ -342,7 +342,7 @@ void gui() {
 	///////////////////////////////////////////////////////////////////////////
 	if (ImGui::CollapsingHeader("Materials", "materials_ch", true, true))
 	{
-		ImGui::ListBox("Materials", &material_index, material_getter, 
+		ImGui::ListBox("Materials", &material_index, material_getter,
 			(void*)&fighterModel->m_materials, fighterModel->m_materials.size(), 8);
 		labhelper::Material & material = fighterModel->m_materials[material_index];
 		char name[256];
@@ -370,14 +370,14 @@ void gui() {
 	// A button for saving your results
 	///////////////////////////////////////////////////////////////////////////
 	if (ImGui::Button("Save Materials")) {
-		labhelper::saveModelToOBJ(fighterModel, model_filename); 
+		labhelper::saveModelToOBJ(fighterModel, model_filename);
 	}
 
 	///////////////////////////////////////////////////////////////////////////
 	// A button for reloading the shaders
 	///////////////////////////////////////////////////////////////////////////
 	if (ImGui::Button("Reload Shaders")) {
-		loadShaders(true); 
+		loadShaders(true);
 	}
 
 	// Render the GUI.
@@ -406,7 +406,7 @@ int main(int argc, char *argv[])
 		gui();
 
 		// Swap front and back buffer. This frame will now be displayed.
-		SDL_GL_SwapWindow(g_window);  
+		SDL_GL_SwapWindow(g_window);
 
 		// check events (keyboard among other)
 		stopRendering = handleEvents();
@@ -417,5 +417,5 @@ int main(int argc, char *argv[])
 	labhelper::freeModel(fighterModel);
 	// Shut down everything. This includes the window and all other subsystems.
 	labhelper::shutDown(g_window);
-	return 0;          
+	return 0;
 }
