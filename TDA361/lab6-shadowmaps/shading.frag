@@ -41,17 +41,23 @@ uniform float point_light_intensity_multiplier = 50.0;
 in vec2 texCoord;
 in vec3 viewSpaceNormal;
 in vec3 viewSpacePosition;
+in vec4 shadowMapCoord;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Input uniform variables
 ///////////////////////////////////////////////////////////////////////////////
 uniform mat4 viewInverse;
 uniform vec3 viewSpaceLightPosition;
+uniform vec3 viewSpaceLightDir;
+uniform float spotOuterAngle;
+uniform float spotInnerAngle;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Output color
 ///////////////////////////////////////////////////////////////////////////////
 layout(location = 0) out vec4 fragmentColor;
+//layout(binding = 10) uniform sampler2D shadowMapTex;
+layout(binding = 10) uniform sampler2DShadow shadowMapTex;
 
 
 
@@ -151,9 +157,18 @@ vec3 calculateIndirectIllumination(vec3 wo, vec3 n)
 
 void main() 
 {
-	float visibility = 1.0;
+	//float depth= texture( shadowMapTex, shadowMapCoord.xy/shadowMapCoord.w ).r;
+	//float visibility= (depth>=(shadowMapCoord.z/shadowMapCoord.w)) ? 1.0 : 0.0;
+	float visibility = textureProj( shadowMapTex, shadowMapCoord );
 	float attenuation = 1.0;
 	
+	vec3 posToLight = normalize(viewSpaceLightPosition - viewSpacePosition);
+	float cosAngle = dot(posToLight, -viewSpaceLightDir);
+
+	// Spotlight with hard border:
+	//float spotAttenuation = (cosAngle > spotOuterAngle) ? 1.0 : 0.0;
+	float spotAttenuation = smoothstep(spotOuterAngle, spotInnerAngle, cosAngle);
+	visibility *= spotAttenuation;
 
 	vec3 wo = -normalize(viewSpacePosition);
 	vec3 n = normalize(viewSpaceNormal);

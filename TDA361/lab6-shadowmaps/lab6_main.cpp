@@ -66,12 +66,12 @@ enum ClampMode {
 };
 
 FboInfo shadowMapFB;
-int shadowMapResolution = 1024;
+int shadowMapResolution = 128;
 int shadowMapClampMode = ClampMode::Edge;
-bool usePolygonOffest = false;
+bool usePolygonOffest = true;
 bool useSoftFalloff = false;
 bool useHardwarePCF = false;
-float polygonOffset_factor = .25f;
+float polygonOffset_factor = 1.100f;
 float polygonOffset_units = 1.0f;
 
 
@@ -130,7 +130,9 @@ void initGL()
 	///////////////////////////////////////////////////////////////////////
 	shadowMapFB.resize(shadowMapResolution, shadowMapResolution);
 
-
+	glBindTexture(GL_TEXTURE_2D, shadowMapFB.depthBuffer);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	glEnable(GL_DEPTH_TEST);	// enable Z-buffering 
 	glEnable(GL_CULL_FACE);		// enables backface culling
 }
@@ -157,21 +159,26 @@ void drawBackground(const mat4 &viewMatrix, const mat4 &projectionMatrix)
 
 void drawScene(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4 &projectionMatrix, const mat4 &lightViewMatrix, const mat4 &lightProjectionMatrix)
 {
+
 	glUseProgram(currentShaderProgram);
 	// Light source
 	vec4 viewSpaceLightPosition = viewMatrix * vec4(lightPosition, 1.0f);
+	mat4 lightMatrix = translate(vec3(0.5f, 0.5f, 0.5f)) * scale(vec3(0.5f, 0.5f, 0.5f)) *  lightProjectionMatrix * lightViewMatrix * inverse(viewMatrix);
 	labhelper::setUniformSlow(currentShaderProgram, "point_light_color", point_light_color);
 	labhelper::setUniformSlow(currentShaderProgram, "point_light_intensity_multiplier", point_light_intensity_multiplier);
 	labhelper::setUniformSlow(currentShaderProgram, "viewSpaceLightPosition", vec3(viewSpaceLightPosition));
 	labhelper::setUniformSlow(currentShaderProgram, "viewSpaceLightDir", normalize(vec3(viewMatrix * vec4(-lightPosition, 0.0f))));
 	labhelper::setUniformSlow(currentShaderProgram, "spotOuterAngle", std::cos(radians(outerSpotlightAngle)));
-
+	labhelper::setUniformSlow(currentShaderProgram, "spotInnerAngle", std::cos(radians(innerSpotlightAngle)));
+	
+	
 
 	// Environment
 	labhelper::setUniformSlow(currentShaderProgram, "environment_multiplier", environment_multiplier);
 
 	// camera
 	labhelper::setUniformSlow(currentShaderProgram, "viewInverse", inverse(viewMatrix));
+	labhelper::setUniformSlow(currentShaderProgram, "lightMatrix", lightMatrix);
 
 	// landing pad 
 	mat4 modelMatrix(1.0f);
@@ -179,12 +186,17 @@ void drawScene(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4 &
 	labhelper::setUniformSlow(currentShaderProgram, "modelViewMatrix", viewMatrix * modelMatrix);
 	labhelper::setUniformSlow(currentShaderProgram, "normalMatrix", inverse(transpose(viewMatrix * modelMatrix)));
 
+
+	glActiveTexture(GL_TEXTURE10);
+	glBindTexture(GL_TEXTURE_2D, shadowMapFB.depthBuffer);
+
 	labhelper::render(landingpadModel);
 
 	// Fighter
 	labhelper::setUniformSlow(currentShaderProgram, "modelViewProjectionMatrix", projectionMatrix * viewMatrix * fighterModelMatrix);
 	labhelper::setUniformSlow(currentShaderProgram, "modelViewMatrix", viewMatrix * fighterModelMatrix);
 	labhelper::setUniformSlow(currentShaderProgram, "normalMatrix", inverse(transpose(viewMatrix * fighterModelMatrix)));
+
 
 	labhelper::render(fighterModel);
 }
@@ -206,6 +218,9 @@ void display(void)
 	mat4 lightViewMatrix = lookAt(lightPosition, vec3(0.0f), worldUp);
 	mat4 lightProjMatrix = perspective(radians(45.0f), 1.0f, 25.0f, 100.0f);
 
+	
+	
+
 	///////////////////////////////////////////////////////////////////////////
 	// Bind the environment map(s) to unused texture units
 	///////////////////////////////////////////////////////////////////////////
@@ -222,9 +237,49 @@ void display(void)
 	///////////////////////////////////////////////////////////////////////////
 	// >>> @task 1
 
+	if (shadowMapFB.width != shadowMapResolution || shadowMapFB.height != shadowMapResolution) {
+		shadowMapFB.resize(shadowMapResolution, shadowMapResolution);
+	}
+	
+	if (shadowMapClampMode == ClampMode::Edge) {
+		glBindTexture(GL_TEXTURE_2D, shadowMapFB.depthBuffer);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+
+	if (shadowMapClampMode == ClampMode::Border) {
+		glBindTexture(GL_TEXTURE_2D, shadowMapFB.depthBuffer);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		vec4 zeros(0.0f);
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, &zeros.x);
+	}
+
+
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFB.framebufferId);
+	glViewport(0, 0, shadowMapFB.width, shadowMapFB.height);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+
 	///////////////////////////////////////////////////////////////////////////
 	// Draw Shadow Map
 	///////////////////////////////////////////////////////////////////////////
+	if (usePolygonOffest) {
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(polygonOffset_factor, polygonOffset_units);
+	}
+
+	drawScene(simpleShaderProgram, lightViewMatrix, lightProjMatrix, lightViewMatrix, lightProjMatrix);
+
+	if (usePolygonOffest) {
+		glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
+	//
+		labhelper::Material &screen = landingpadModel->m_materials[8];
+	screen.m_emission_texture.gl_id = shadowMapFB.colorTextureTarget;
 
 	///////////////////////////////////////////////////////////////////////////
 	// Draw from camera
@@ -234,6 +289,8 @@ void display(void)
 	glClearColor(0.2, 0.2, 0.8, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
+
+
 	drawBackground(viewMatrix, projMatrix);
 	drawScene(shaderProgram, viewMatrix, projMatrix, lightViewMatrix, lightProjMatrix);
 	debugDrawLight(viewMatrix, projMatrix, vec3(lightPosition));
