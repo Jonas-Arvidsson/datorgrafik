@@ -108,6 +108,8 @@ void loadShaders(bool is_reload)
 
 void initGL()
 {
+
+	//loadShaders(false); //maybe need this?
 	///////////////////////////////////////////////////////////////////////
 	//		Load Shaders
 	///////////////////////////////////////////////////////////////////////
@@ -384,6 +386,14 @@ void gui()
 	ImGui::Checkbox("Use hardware PCF", &useHardwarePCF);
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	// ----------------------------------------------------------
+
+	///////////////////////////////////////////////////////////////////////////
+	// A button for reloading the shaders
+	///////////////////////////////////////////////////////////////////////////
+	if (ImGui::Button("Reload Shaders")) {
+		loadShaders(true);
+	}
+
 
 	// Render the GUI.
 	ImGui::Render();
