@@ -66,7 +66,7 @@ enum ClampMode {
 };
 
 FboInfo shadowMapFB;
-int shadowMapResolution = 128;
+int shadowMapResolution = 1024;
 int shadowMapClampMode = ClampMode::Edge;
 bool usePolygonOffest = true;
 bool useSoftFalloff = false;

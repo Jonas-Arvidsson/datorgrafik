@@ -3,11 +3,11 @@
 #include <labhelper.h>
 
 FboInfo::FboInfo() : isComplete(false)
-	, framebufferId(UINT32_MAX)
-	, colorTextureTarget(UINT32_MAX)
-	, depthBuffer(UINT32_MAX)
-	, width(0)
-	, height(0)
+, framebufferId(UINT32_MAX)
+, colorTextureTarget(UINT32_MAX)
+, depthBuffer(UINT32_MAX)
+, width(0)
+, height(0)
 {};
 
 FboInfo::FboInfo(int w, int h) : FboInfo() {
@@ -17,7 +17,7 @@ FboInfo::FboInfo(int w, int h) : FboInfo() {
 void FboInfo::resize(int w, int h) {
 	width = w;
 	height = h;
-		
+
 	///////////////////////////////////////////////////////////////////////
 	// if no texture indices yet, allocate
 	///////////////////////////////////////////////////////////////////////
@@ -31,8 +31,8 @@ void FboInfo::resize(int w, int h) {
 	if (depthBuffer == UINT32_MAX) {
 		glGenTextures(1, &depthBuffer);
 		glBindTexture(GL_TEXTURE_2D, depthBuffer);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
